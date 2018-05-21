@@ -12,7 +12,8 @@ Alarm clock written in Python mainly targeted to Raspberry Pi
 ### Frontend
 * 100% AJAX
 * Lists set alarms  
-![frontend](https://raw.githubusercontent.com/jaxke/alarmpy/master/Screenshot%20from%202018-05-15%2012-57-10.png)
+![frontend](https://github.com/jaxke/alarmpi/blob/master/Screenshot%20from%202018-05-15%2012-57-10.png)
+
 ### Backend
 * Return and change alarm info from/to local JSON file that keeps the alarms  
 
