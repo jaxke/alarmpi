@@ -1,0 +1,302 @@
+
+
+<html xmlns="http://www.w3.org/1999/html">
+<head>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.6.1/css/bulma.min.css">
+    <link rel="stylesheet" type="text/css" href="styles.css">
+</head>
+<body>
+<fieldset style="padding: 3%">
+    <legend> Alarm settings</legend>
+    <p>Hours:</p>
+    <input type="text" id="set-time-hh" style="width: 15em" class="input is-primary">
+    <p>Minutes:</p>
+    <input type="text" id="set-time-mm" style="width: 15em" class="input is-primary">
+    <p>Name:</p>
+    <input id="set-name" type="text" style="width: 15em" class="input is-primary" value="test">
+    <br>
+    <label> <input type="radio" class="radio" name="radio-diff" value="easy"> Easy </label>
+    <label> <input type="radio" class="radio" name="radio-diff" value="medium"> Medium </label>
+    <br>
+    <label><input type="radio" class="radio" name="radio-diff" value="hard"> Hard </label>
+    <label><input type="radio" class="radio" name="radio-diff" value="none" checked="checked"> None </label>
+<br>
+<fieldset style="padding: 1%" id="checkbox-group"/>
+    <legend>Set weekdays</legend>
+    <label>
+    <input type="checkbox" class="checkbox" id="0"> Monday
+    </label>
+    <label>
+    <input type="checkbox" class="checkbox" id="1"> Tuesday
+    </label>
+    <label>
+    <input type="checkbox" class="checkbox" id="2"> Wednesday
+    </label>
+    <label>
+    <input type="checkbox" class="checkbox" id="3"> Thursday
+    </label>
+<br>
+	<label>
+    <input type="checkbox" class="checkbox" id="4"> Friday
+    </label>
+    <label>
+    <input type="checkbox" class="checkbox" id="5"> Saturday
+    </label>
+    <label>
+    <input type="checkbox" class="checkbox" id="6"> Sunday
+    </label>
+    <label>
+    <input type="checkbox" class="checkbox" id="a"> Every day
+    </label>
+</fieldset>
+    <button style="margin-top: 1em; width: 4em; float: right;" id="set-btn" class="button is-info">Set</button>
+</fieldset>
+
+<table id="table-alarms" class="table is-bordered is-striped is-fullwidth is-hoverable">
+    <tr id="column-info" style="font-weight: bold">
+        <td>
+            <div>Name</div>
+        </td>
+        <td>
+            <div>Time</div>
+        </td>
+        <td>
+            <div>Days</div>
+        </td>
+        <td>
+            <div>Difficulty</div>
+        </td>
+    </tr>
+</table>
+<p style="float: right; margin-right: 1em;";> Click a row to delete alarm </p>
+
+<footer class="footer">
+  <div class="container">
+    <div class="content has-text-centered">
+      <p style="float: left">
+        <strong>Python Alarm Clock</strong>
+      </p>
+        <a href="https://bulma.io/">
+         <img style="float: right; width: 150px; height: auto" src="/static/made-with-bulma--dark.png" alt="Made with Bulma">
+        </a>
+    </div>
+  </div>
+
+</footer>
+
+<script>
+    "use scrict";
+
+    // Checkboxes have number IDs for weekdays so they are easily handled in the alarm script.
+    // In this array, each item's index represents our numbered weekdays, e.g. "Mon" is 0th day
+    // like it is in the Python script too(as per datetime.datetime.today().weekday() function).
+    const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+    function clearAll(){
+      $.ajax({
+          url: "{{url_for('ajax_post')}}",
+          type: "POST",
+          data: JSON.stringify({clearAll: 1}),
+          contentType: "application/json",
+          error: function (xhr, textStatus, errorThrown) {
+              //console.log(errorThrown);
+          },
+          success: function (msg) {
+            getAlarms();
+          }
+      });
+    }
+
+    function updateTotal(alarmsLength) {
+        $("#total-count").remove();
+        var trFooter = ("<tr style=\"font-weight: bold\" id=\"total-count\"><td>Total alarms:</td><td></td><td></td><td id=\"total-alarms\">" + alarmsLength + "</td></tr>");
+        $("#table-alarms").append(trFooter);
+    }
+
+    function timeNow() {
+      var d = new Date(),
+      h = (d.getHours()<10?'0':'') + d.getHours(),
+      m = (d.getMinutes()<10?'0':'') + d.getMinutes();
+      return [h, m];
+}
+
+    function getAlarms() {
+        $.ajax({
+            url: "{{url_for('ajax_post')}}",
+            type: "POST",
+            data: JSON.stringify({getAll: 1}),
+            contentType: "application/json",
+            error: function (xhr, textStatus, errorThrown) {
+                //console.log(errorThrown);
+            },
+            success: function (msg) {
+              if (msg.length == 0){
+                return;
+              }
+              populateList(JSON.parse(msg));
+            }
+        });
+
+    }
+
+    // TODO Extremely bad code
+    function validateTime(hours, mins){
+      $("#set-time-hh").removeClass("is-danger");
+      $("#set-time-mm").removeClass("is-danger");
+      var failure = false;
+      if (isNaN(parseInt(hours))) {
+        failure = true;
+        $("#set-time-hh").addClass("is-danger");
+      } else if (parseInt(hours) < 0 ||  parseInt(hours) > 24) {
+        $("#set-time-hh").addClass("is-danger");
+        failure =  true;
+      }
+      if (isNaN(parseInt(mins))) {
+        $("#set-time-mm").addClass("is-danger");
+        failure =  true;
+      } else if (parseInt(mins) < 0 ||  parseInt(mins) > 59) {
+        $("#set-time-mm").addClass("is-danger");
+        failure =  true;
+      }
+      return !failure;
+    }
+
+    // Take in day(s) as argument(ie. 012 for mon, tue, wed) and convert it to abbreviation of said days.
+    function getWeekdays(dayInt){
+        if (dayInt == "a") return "All";
+        if (dayInt == "o") return "Once";
+        var daysStr = "";
+        // Iterate each character in string(numbers).
+        for (var day = 0; day < dayInt.toString().length; day++){
+            // days array holds all weekday abbreviations (0 => mon, 1 => tue, etc..)
+            daysStr += days[dayInt[day]] + " ";
+        }
+        console.log(daysStr);
+        return daysStr;
+    }
+
+    function populateList(alarmsJSON) {
+      // We want to replace everything, not append to a possibly existing list.
+      var total = 0;
+      $("#table-alarms").empty();
+      jQuery.each(alarmsJSON, function(title, obj) {
+          daysStr = getWeekdays(obj.days);
+          if (obj.difficulty == "") obj.difficulty = "None";
+          $("#table-alarms").append("<tr id=\"" + title + "\"><td><div>" + title + "</div></td>" +
+              "<td><div>" + obj.hours + ":" + obj.mins + "</div></td><td>" +
+              "<div>" + daysStr + "</div></td><td>"+obj.difficulty+"</td></tr>");
+
+              total++;
+        });
+      updateTotal(total);
+    }
+
+    $(document).ready(function () {
+      var now = timeNow()
+      $("#a").prop('checked', true)
+      $('#set-time-hh').val(now[0]);
+      $('#set-time-mm').val(now[1]);
+
+        $("#set-btn").on("click", function () {
+            addAlarm();
+        });
+        $("#clr-btn").on("click", function () {
+            clearAll();
+        });
+
+        // Capture click events for <tr> nodes(table row).
+        $("#table-alarms").on("click", "tr", function (evt) {
+          console.log("tr clicked")
+            // Don't let users delete header and footer rows...
+            if (evt.currentTarget.id == "column-info" || evt.currentTarget.id == "total-count") return;
+            var nodeID = evt.currentTarget.id;
+            removeAlarm(nodeID);
+        })
+    });
+
+    function addAlarm() {
+        var setTimeHH = $("#set-time-hh").val();
+        var setTimeMM = $("#set-time-mm").val();
+        if (!validateTime(setTimeHH, setTimeMM)){
+          return;
+        }
+        if (setTimeHH == null || setTimeMM == null) {
+            return;
+        }
+        var days = "";
+        // id == DOM id of each
+        // E.g. "01" == Mon, Tue
+        $(".checkbox").each(function (id) {
+            if ($("#" + id).prop('checked')) {
+                days += id;
+            }
+        });
+        var difficulty = $("input[name='radio-diff']:checked").val();
+        // Every day.
+        if ($("#a").prop('checked')) {
+            days = 'a';
+        }
+        // Only once; next time that time passes, today or tomorrow, since none checked.
+        if (days.length === 0) days = 'o';
+        $.ajax({
+            url: "{{url_for('ajax_post')}}",
+            type: "POST",
+            contentType: "application/json",
+            data: JSON.stringify({
+                addAlarm: 1,
+                hours: setTimeHH,
+                mins: setTimeMM,
+                name: $("#set-name").val(),
+                days: days,
+                difficulty: difficulty
+              }),
+            error: function (xhr, textStatus, errorThrown) {
+                //console.log(errorThrown);
+            },
+            success: function (msg) {
+              if (msg == "Success") {
+                $("#set-name").removeClass("is-danger")
+                getAlarms();
+              }
+              else if (msg == "NameException") {
+                $("#set-name").addClass("is-danger")
+                console.log("name taken!")
+              }
+              else if (msg == "JSONException") {
+                console.log("Trouble parsing JSON")
+              }
+
+            }
+        })
+    }
+    // ID = Alarm name
+    function removeAlarm(id) {
+      //debugger;
+        $.ajax({
+            url: "{{url_for('ajax_post')}}",
+            type: "POST",
+            contentType: "application/json",
+            data: JSON.stringify({"removeAlarm": id}),
+            error: function (xhr, textStatus, errorThrown) {
+                //console.log(errorThrown);
+            },
+            success: function (msg) {
+                if (msg == "Success") {
+                  console.log(msg)
+                    getAlarms();
+                } else {
+                    //console.log("error");
+                }
+            }
+
+        })
+    }
+
+    // Gets all alarms and fills them into the table.
+    getAlarms();
+</script>
+
+</body>
+</html>
