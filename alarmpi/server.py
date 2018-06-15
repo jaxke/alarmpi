@@ -2,12 +2,15 @@
 from flask import Flask, jsonify, render_template, request
 from pdb import set_trace as st
 import json
+import os
+
+
 app = Flask(__name__)
-file = "alarms.json"
+alarms_file = "alarms.json"
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', debug=True)
+    app.run(host='0.0.0.0', debug=True, threaded=True)
 class Config(object):
-    SERVER_NAME = "alarmpy"
+    pass#SERVER_NAME = "alarmpy"
 
 
 @app.route('/')
@@ -17,27 +20,31 @@ def index():
 
 @app.route('/', methods=['POST'])
 def ajax_post():
-    r = request.get_data().decode('utf-8')
-    print("POST:" + r)
-    if json.loads(r).get('getAll'):
+    post_data = json.loads(request.get_data().decode('utf-8'))
+    #print("POST:" + post_data)
+    if post_data.get('getAll'):
         return get_all()
-    if json.loads(r).get('addAlarm'):
+    #if request.json.get('getAll'):
+        #return get_all()
+    if post_data.get('addAlarm'):
         return add_alarm(request.json)
-    if json.loads(r).get('removeAlarm'):
+    if post_data.get('removeAlarm'):
         return delete_alarm(request.json)
-    if json.loads(r).get('clearAll'):
+    if post_data.get('clearAll'):
         return clear_all()
     return ""
 
 
 def get_all():
+    if not os.path.isfile(alarms_file):
+        open(alarms_file, 'a').close()
     json_data = ""
-    with open(file, "r") as fr:
+    with open(alarms_file, "r") as fr:
         json_data = fr.read()
     return json_data
 
 def clear_all():
-    open(file, 'w').close()
+    open(alarms_file, 'w').close()
     return get_all()
 
 
@@ -99,5 +106,5 @@ def delete_alarm(alarm_name):
 
 # Argument = dict
 def write_to_file(data):
-    with open(file, "w") as fw:
+    with open(alarms_file, "w") as fw:
         json.dump(data, fw)

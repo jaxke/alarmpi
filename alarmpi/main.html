@@ -17,6 +17,7 @@
     <p>Name:</p>
     <input id="set-name" type="text" style="width: 15em" class="input is-primary" value="test">
     <br>
+    <input id="address" type="text" style="width: 15em" class="input is-primary" value="192.168.8.103:5000">
     <label> <input type="radio" class="radio" name="radio-diff" value="easy"> Easy </label>
     <label> <input type="radio" class="radio" name="radio-diff" value="medium"> Medium </label>
     <br>
@@ -98,6 +99,10 @@
         $("#total-count").remove();
         var trFooter = ("<tr style=\"font-weight: bold\" id=\"total-count\"><td>Total alarms:</td><td></td><td></td><td id=\"total-alarms\">" + alarmsLength + "</td></tr>");
         $("#table-alarms").append(trFooter);
+    }
+
+    function getIP(){
+      return $("#address").val();
     }
 
     function getAlarms() {
