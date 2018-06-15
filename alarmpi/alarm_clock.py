@@ -35,20 +35,19 @@ def get_current_time():
 
 def ring_alarm(name):
     clear_term_window()
-    print(name)
+    print("Alarm " + name)
     exc = ["ffplay", "-nodisp", "-autoexit", sound_file]
+    # Suppress shell output
     FNULL = open(os.devnull, 'w')
     proc = subprocess.Popen(exc, stdout=FNULL, stderr=subprocess.STDOUT)
-    #kill = str(input("Enter 'a': "))
-    #input("input")
     GPIO.setmode(GPIO.BCM)
     GPIO.setwarnings(False)
     GPIO.setup(2,GPIO.IN)
+    # Press GPIO2 to dismiss(the idea is to use a switch)
     while True:
     	if not GPIO.input(2):
             proc.kill()
             break
-    #if kill == 'a':
 
 
 class Alarm:
@@ -65,21 +64,27 @@ class Alarm:
 # Lists alarms that have rang today, clear after a day has passed.
 alarms_done = []
 
+
+# 123 => [1, 2, 3]
 def days_to_list(days):
     return [x for x in days]
 
+
 def clear_term_window():
     os.system('clear')
+
 
 def print_current_time(h, m, s):
     print("CURRENT TIME: {}:{}:{}".format(timeH, timeM, timeS))
 
 
+# $ flask run
 def request_alarms():
     r = requests.post(serv_ip, data=json.dumps({'getAll': 1}))
     if r.status_code == 200:
         if r.text:
             return json.loads(r.text)
+        # No alarms, return None
         else:
             return
     else:
@@ -98,6 +103,20 @@ def list_alarms_tomorrow(alarms, wkday_now):
             print("{}\t\t{}:{}".format(al, alarms[al]['hours'], alarms[al]['mins']))
 
 
+# Attempt to reconnect to server 3 times
+def attempt_to_reconnect():
+    print("Connection error, trying to re-establish link...")
+    for i in [0, 1, 2]:
+        sleep(5)
+        alarms_json = request_alarms()
+        if alarms_json != "connection error":
+            # This can still be None, but getting the response is the idea
+            return alarms_json
+        if i == 2:
+            print("ERROR: Cannot re-establish connection!")
+            exit(1)
+
+
 if __name__ == "__main__":
     while True:
         clear_term_window()
@@ -108,19 +127,13 @@ if __name__ == "__main__":
             alarms_done = []
         alarms_json = request_alarms()
         if alarms_json == "connection error":
-            print("Connection error, trying to re-establish link...")
-            for i in [0, 1, 2]:
-                sleep(5)
-                alarms_json = request_alarms()
-                if alarms_json != "connection error":
-                    break
-                if i == 2:
-                    print("ERROR: Cannot re-establish connection!")
+            # The function will terminate program if fails or return json
+            alarms_json = attempt_to_reconnect()
         alarms = []
-        # If key values were found in file
+        # If key values were found in file(retval is not None)
         if alarms_json:
             for alarm_name in alarms_json.keys():
-                if alarm_name in alarms_done:
+                if alarm_name in alarms_done:   # Skip alarms that have rang today
                     continue
                 al = alarms_json[alarm_name]
                 # Also disregard alarms that have passed once the program is ran
@@ -140,4 +153,5 @@ if __name__ == "__main__":
             if timeH == al.hours and timeM == al.mins:
                 ring_alarm(al.name)
                 alarms_done.append(al.name)
+        # Set time resolution to 1 sec so that time print updates every second
         time.sleep(1)
