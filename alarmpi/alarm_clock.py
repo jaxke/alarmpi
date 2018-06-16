@@ -8,7 +8,11 @@ import os
 import requests
 from sys import argv, exit
 from time import sleep
-import RPi.GPIO as GPIO
+try:
+    import RPi.GPIO as GPIO
+except ImportError:
+    nogpio = True
+    print("gpio module not found")
 
 
 # TODO assumes port 5000
@@ -20,6 +24,7 @@ elif len(argv) == 1:
 else:
     print("You can only pass one argument!")
     exit(1)
+
 
 WORKING_DIR = os.getcwd()
 sound_file = WORKING_DIR + "/alarm.mp3"
@@ -40,14 +45,20 @@ def ring_alarm(name):
     # Suppress shell output
     FNULL = open(os.devnull, 'w')
     proc = subprocess.Popen(exc, stdout=FNULL, stderr=subprocess.STDOUT)
-    GPIO.setmode(GPIO.BCM)
-    GPIO.setwarnings(False)
-    GPIO.setup(2,GPIO.IN)
-    # Press GPIO2 to dismiss(the idea is to use a switch)
-    while True:
-    	if not GPIO.input(2):
+    if not nogpio:
+        GPIO.setmode(GPIO.BCM)
+        GPIO.setwarnings(False)
+        GPIO.setup(2,GPIO.IN)
+        # Press GPIO2 to dismiss(the idea is to use a switch)
+        while True:
+            if not GPIO.input(2):
+                proc.kill()
+                break
+    # Use input to dismiss if GPIO wasn't imported
+    else:
+        while True:
+            # TODO
             proc.kill()
-            break
 
 
 class Alarm:
