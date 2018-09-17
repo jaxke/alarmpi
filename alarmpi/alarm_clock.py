@@ -3,12 +3,18 @@ import datetime
 import time
 from time import gmtime, strftime
 from pdb import set_trace as st
+import cec
 import json
 import os
 import requests
 from sys import argv, exit
 from time import sleep
 import sys
+
+
+# TODO interface to change the value
+mode = "TV"
+
 try:
     import RPi.GPIO as GPIO
     nogpio = False
@@ -18,7 +24,7 @@ except ImportError:
 
 serv_ip = None
 
-if len(argv) in [2,3]:
+if len(argv) in [2, 3]:
     if len(argv) == 3:
         serv_ip = "http://" + argv[2] + ":5000"
     gpio_in_pin = argv[1]
@@ -54,6 +60,14 @@ def get_current_time():
 
 
 def ring_alarm(name):
+    if mode == "TV":
+        tv_was_off = False
+        tv_status = cec.check_tv_status()
+        if tv_status == "standby":
+            tv_was_off = True
+            cec.tv_on()
+        elif not tv_status:
+            pass  # TODO??
     clear_term_window()
     print("Alarm " + name)
     exc = ["ffplay", "-nodisp", "-autoexit", sound_file]
@@ -64,9 +78,9 @@ def ring_alarm(name):
         GPIO.setmode(GPIO.BOARD)
         GPIO.setwarnings(False)
         GPIO.setup(gpio_in_pin, GPIO.IN)
-        # Press GPIO2 to dismiss(the idea is to use a switch)
+        # Press gpio_in_pin to dismiss(the idea is to use a switch)
         while True:
-            if not GPIO.input(gpio_in_pin):
+            if GPIO.input(gpio_in_pin):
                 proc.kill()
                 break
     # Use input to dismiss if GPIO wasn't imported
@@ -76,6 +90,9 @@ def ring_alarm(name):
             i = str(input("> "))
             if i == "a":
                 proc.kill()
+    if mode == "TV" and tv_was_off:
+        if cec.check_tv_status() == "on":
+            cec.tv_off()
 
 
 class Alarm:
