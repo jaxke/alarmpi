@@ -14,7 +14,7 @@ try:
     nogpio = False
 except ImportError:
     nogpio = True
-    print("gpio module not found")
+    print("[ERROR] GPIO module not found!")
 
 serv_ip = None
 
@@ -31,17 +31,14 @@ if len(argv) in [2,3]:
 elif len(argv) == 1:
     nogpio = True
     print("GPIO pin not specified in args(nogpio mode)!")
-    sleep(3)    # To display the print above
+    sleep(2)    # To display the print above
 else:
-    print("Too many arguments!")
+    print("[ERROR] Too many arguments!")
     exit(1)
 
 if not serv_ip:
     serv_ip = "http://127.0.0.1:5000"
     print("IP not specified, using localhost.")
-
-
-
 
 
 WORKING_DIR = os.getcwd()

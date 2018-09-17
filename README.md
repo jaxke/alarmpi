@@ -4,11 +4,13 @@ Alarm clock written in Python mainly targeted to Raspberry Pi
 * Flask
 * ffmpeg(ffplay)
 * RPi.GPIO
+
 ## Components
 * Web frontend written in Javascript using jQuery for AJAX calls and DOM manipulation
 * Bulma CSS
 * Web backend written in Python using Flask
 * Alarm clock written in Python
+
 ### Frontend
 * 100% AJAX
 * Lists set alarms  
@@ -29,7 +31,7 @@ Flask setup:
 * Uses ffplay for alarm sound file playback
 
 ## Pi
-In series: GPIO port 2 -> 10k ohm resistor -> button switch -> earth  
+In series: GPIO port 2 -> 10k ohm resistor -> button switch -> 3.3 V  
 Press button for ~1 second and the alarm will dismiss
 
 ## TODO
