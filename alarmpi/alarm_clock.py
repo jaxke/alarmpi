@@ -16,26 +16,32 @@ except ImportError:
     nogpio = True
     print("gpio module not found")
 
+serv_ip = None
 
-if len(argv) > 1:
+if len(argv) in [2,3]:
+    if len(argv) == 3:
+        serv_ip = "http://" + argv[2] + ":5000"
     gpio_in_pin = argv[1]
     try:
         gpio_in_pin = int(gpio_in_pin)
-        print("Using GPIO pin number " + str(gpio_in_pin)
+        print("Using GPIO pin number " + str(gpio_in_pin))
     except ValueError:
         print("First argument must be the GPIO pin number!")
         exit(1)
-# TODO assumes port 5000
-if len(argv) == 3:
-    serv_ip = "http://" + argv[2] + ":5000"
 elif len(argv) == 1:
     nogpio = True
-    print("GPIO pin not specified in args(nogpio mode)!\nUsing localhost...")
+    print("GPIO pin not specified in args(nogpio mode)!")
     sleep(3)    # To display the print above
-    serv_ip = "http://127.0.0.1:5000"
 else:
     print("Too many arguments!")
     exit(1)
+
+if not serv_ip:
+    serv_ip = "http://127.0.0.1:5000"
+    print("IP not specified, using localhost.")
+
+
+
 
 
 WORKING_DIR = os.getcwd()
