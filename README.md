@@ -3,7 +3,8 @@ Alarm clock written in Python mainly targeted to Raspberry Pi
 ## Requiremens
 * Flask
 * ffmpeg(ffplay)
-* RPi.GPIO
+* RPi.GPIO [optional]
+* cec-utils [optional]
 
 ## Components
 * Web frontend written in Javascript using jQuery for AJAX calls and DOM manipulation
@@ -32,7 +33,8 @@ Flask setup:
 
 ## Pi
 In series: GPIO port 2 -> 10k ohm resistor -> button switch -> 3.3 V  
-Press button for ~1 second and the alarm will dismiss
+Press button for ~1 second and the alarm will dismiss.
+If TV supports CEC and cec-utils is installed, TV will turn on before the alarm rings and will return to standby after alarm is dismissed(therefore external loudspeakers are not required).
 
 ## TODO
 - [x] Raspberry Pi GPIO  
