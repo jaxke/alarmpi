@@ -8,22 +8,34 @@ import os
 import requests
 from sys import argv, exit
 from time import sleep
+import sys
 try:
     import RPi.GPIO as GPIO
+    nogpio = False
 except ImportError:
     nogpio = True
     print("gpio module not found")
 
 
+if len(argv) > 1:
+    gpio_in_pin = argv[1]
+    try:
+        gpio_in_pin = int(gpio_in_pin)
+        print("Using GPIO pin number " + gpio_in_pin)
+    except ValueError:
+        print("First argument must be the GPIO pin number!")
+        return
 # TODO assumes port 5000
-if len(argv) == 2:
-    serv_ip = "http://" + argv[1] + ":5000"
+if len(argv) == 3:
+    serv_ip = "http://" + argv[2] + ":5000"
 elif len(argv) == 1:
-    print("Using localhost server(no arguments passed)") # TODO this print is overwritten immediately
+    nogpio = True
+    print("GPIO pin not specified in args(nogpio mode)!\nUsing localhost...")
+    sleep(3)    # To display the print above
     serv_ip = "http://127.0.0.1:5000"
 else:
-    print("You can only pass one argument!")
-    exit(1)
+    print("Too many arguments!")
+    return
 
 
 WORKING_DIR = os.getcwd()
@@ -46,19 +58,21 @@ def ring_alarm(name):
     FNULL = open(os.devnull, 'w')
     proc = subprocess.Popen(exc, stdout=FNULL, stderr=subprocess.STDOUT)
     if not nogpio:
-        GPIO.setmode(GPIO.BCM)
+        GPIO.setmode(GPIO.BOARD)
         GPIO.setwarnings(False)
-        GPIO.setup(2,GPIO.IN)
+        GPIO.setup(gpio_in_pin, GPIO.IN)
         # Press GPIO2 to dismiss(the idea is to use a switch)
         while True:
-            if not GPIO.input(2):
+            if not GPIO.input(gpio_in_pin):
                 proc.kill()
                 break
     # Use input to dismiss if GPIO wasn't imported
     else:
         while True:
             # TODO
-            proc.kill()
+            i = str(input("> "))
+            if i == "a":
+                proc.kill()
 
 
 class Alarm:
