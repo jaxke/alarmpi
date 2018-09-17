@@ -21,7 +21,7 @@ if len(argv) > 1:
     gpio_in_pin = argv[1]
     try:
         gpio_in_pin = int(gpio_in_pin)
-        print("Using GPIO pin number " + gpio_in_pin)
+        print("Using GPIO pin number " + str(gpio_in_pin)
     except ValueError:
         print("First argument must be the GPIO pin number!")
         exit(1)
