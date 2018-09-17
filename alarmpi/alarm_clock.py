@@ -24,7 +24,7 @@ if len(argv) > 1:
         print("Using GPIO pin number " + gpio_in_pin)
     except ValueError:
         print("First argument must be the GPIO pin number!")
-        return
+        exit(1)
 # TODO assumes port 5000
 if len(argv) == 3:
     serv_ip = "http://" + argv[2] + ":5000"
@@ -35,7 +35,7 @@ elif len(argv) == 1:
     serv_ip = "http://127.0.0.1:5000"
 else:
     print("Too many arguments!")
-    return
+    exit(1)
 
 
 WORKING_DIR = os.getcwd()
